@@ -8,8 +8,16 @@ load_dotenv(BASE_DIR / ".env")
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "securescan-ai-super-secret-key-2026")
-    DB_PATH = os.getenv("DB_PATH", str(BASE_DIR / "database" / "securescan.db"))
-    UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "uploads" / "authorizations"))
+    
+    # Serverless (Vercel) / Cloud environment compatibility
+    IS_VERCEL = bool(os.getenv("VERCEL"))
+    if IS_VERCEL:
+        DB_PATH = os.getenv("DB_PATH", "/tmp/securescan.db")
+        UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "/tmp/uploads/authorizations")
+    else:
+        DB_PATH = os.getenv("DB_PATH", str(BASE_DIR / "database" / "securescan.db"))
+        UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "uploads" / "authorizations"))
+
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB max
     ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg"}
     
