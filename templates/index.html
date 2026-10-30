@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureScan AI — Authorized Vulnerability Scanner & Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  <!-- Chart.js for interactive analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#dashboard" class="brand-logo">
+          <div class="brand-icon">⚡</div>
+          <div class="brand-title">SecureScan <span>AI</span></div>
+        </a>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-item active" data-page="dashboard">
+          <span class="icon">📊</span>
+          <span class="label">Dashboard</span>
+        </li>
+        <li class="nav-item" data-page="targets">
+          <span class="icon">🎯</span>
+          <span class="label">Authorized Targets</span>
+        </li>
+        <li class="nav-item" data-page="new-scan">
+          <span class="icon">🚀</span>
+          <span class="label">New Scan</span>
+        </li>
+        <li class="nav-item" data-page="live-scan" id="nav-live-scan" style="display: none;">
+          <span class="icon">📡</span>
+          <span class="label">Live Scan</span>
+        </li>
+        <li class="nav-item" data-page="scan-results" id="nav-results" style="display: none;">
+          <span class="icon">📑</span>
+          <span class="label">Results</span>
+        </li>
+        <li class="nav-item" data-page="history">
+          <span class="icon">🕰️</span>
+          <span class="label">Scan History</span>
+        </li>
+        <li class="nav-item" data-page="compliance">
+          <span class="icon">⚖️</span>
+          <span class="label">Compliance & Audit</span>
+        </li>
+        <li class="nav-item" data-page="settings">
+          <span class="icon">⚙️</span>
+          <span class="label">Settings</span>
+        </li>
+        <li class="nav-item" data-page="about">
+          <span class="icon">ℹ️</span>
+          <span class="label">About & Ethics</span>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <button id="theme-toggle" class="btn btn-secondary btn-sm" title="Toggle Light/Dark Theme">🌓</button>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">v2.4 Enterprise</span>
+      </div>
+    </aside>
+
+    <!-- Main View Area -->
+    <main class="main-wrapper">
+      <!-- Sticky Topbar -->
+      <header class="topbar">
+        <div class="page-title-area">
+          <button id="sidebar-toggle" class="btn btn-secondary btn-sm" title="Toggle Sidebar">☰</button>
+          <h1 class="page-title" id="current-page-title">Dashboard Overview</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="status-indicator">
+            <div class="pulse-dot"></div>
+            <span>SSRF Engine Armed</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="App.navigate('new-scan')">+ Launch Scan</button>
+        </div>
+      </header>
+
+      <!-- Scrollable Body Content -->
+      <div class="content-body">
+        
+        <!-- ================= PAGE 1: DASHBOARD ================= -->
+        <section id="page-dashboard" class="page-view active">
+          <!-- Animated Stat Counters -->
+          <div class="stats-grid">
+            <div class="card stat-card cyan">
+              <div class="stat-title">Total Scans Executed</div>
+              <div class="stat-value" id="stat-total-scans">0</div>
+            </div>
+            <div class="card stat-card purple">
+              <div class="stat-title">Identified Vulnerabilities</div>
+              <div class="stat-value" id="stat-total-vulns">0</div>
+            </div>
+            <div class="card stat-card red">
+              <div class="stat-title">Critical Severity Issues</div>
+              <div class="stat-value" id="stat-critical-vulns">0</div>
+            </div>
+            <div class="card stat-card blue">
+              <div class="stat-title">Average Target Risk Score</div>
+              <div class="stat-value" id="stat-avg-risk">0.0</div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Finding Severity Breakdown</div>
+              </div>
+              <div style="height: 250px; position: relative;">
+                <canvas id="chart-severity"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Vulnerabilities Detected Over Time</div>
+              </div>
+              <div style="height: 250px; position: relative;">
+                <canvas id="chart-timeline"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+              <div class="card-title">OWASP Top 10 Category Distribution</div>
+            </div>
+            <div style="height: 220px; position: relative;">
+              <canvas id="chart-owasp"></canvas>
+            </div>
+          </div>
+
+          <!-- Recent Scans Table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Recent Authorized Scans</div>
+              <button class="btn btn-secondary btn-sm" onclick="App.navigate('history')">View All Scans →</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Scan ID</th>
+                    <th>Target Domain</th>
+                    <th>Type / Intensity</th>
+                    <th>Status</th>
+                    <th>Findings</th>
+                    <th>Risk Score</th>
+                    <th>Completed At</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-recent-scans-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 2: AUTHORIZED TARGETS ================= -->
+        <section id="page-targets" class="page-view">
+          <div class="card" style="margin-bottom: 1.25rem;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Authorized Target Management</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                  Scans are strictly prohibited on targets unless ownership is verified or formal written authorization is on file.
+                </p>
+              </div>
+              <button class="btn btn-primary" onclick="TargetsManager.openAddTargetModal()">+ Add New Target</button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Domain</th>
+                    <th>Target Type</th>
+                    <th>Status</th>
+                    <th>Verification Method</th>
+                    <th>Authorized Scope</th>
+                    <th>Expiry / Window</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="targets-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 3: NEW SCAN ================= -->
+        <section id="page-new-scan" class="page-view">
+          <!-- Compliance Warning Banner -->
+          <div class="card" style="border-left: 4px solid var(--accent-cyan); background: rgba(0, 243, 255, 0.05); margin-bottom: 1.5rem;">
+            <div style="display: flex; gap: 1rem; align-items: center;">
+              <span style="font-size: 1.8rem;">🔒</span>
+              <div>
+                <div style="font-weight: 600; color: var(--accent-cyan); margin-bottom: 0.2rem;">Authorized Penetration Testing Notice</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                  Only systems with verified ownership or approved written authorization may be selected. The scanner engine enforces strict SSRF protections, rate limits, and scope boundaries automatically.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.5rem;">
+            <!-- Scan Configuration Form -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Configure Security Assessment</div>
+              </div>
+
+              <form id="new-scan-form" onsubmit="ScanManager.handleScanSubmit(event)">
+                <!-- Target Selection Dropdown -->
+                <div class="form-group">
+                  <label class="form-label" for="scan-target-select">Select Authorized Target *</label>
+                  <select id="scan-target-select" class="form-select" onchange="ScanManager.handleTargetSelected(this.value)" required>
+                    <option value="">-- Choose a verified target --</option>
+                  </select>
+                  <small style="color: var(--text-muted); font-size: 0.78rem;">Don't see your target? Add and verify it in the Targets tab first.</small>
+                </div>
+
+                <!-- Target URL / Starting Path -->
+                <div class="form-group">
+                  <label class="form-label" for="scan-target-url">Target Starting URL / Subpath *</label>
+                  <input type="text" id="scan-target-url" class="form-control" placeholder="https://example.com/app" required>
+                  <small style="color: var(--text-muted); font-size: 0.78rem;">Must match the authorized domain and stay within authorized in-scope paths.</small>
+                </div>
+
+                <!-- Scan Type & Intensity Options -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div class="form-group">
+                    <label class="form-label">Scan Profile</label>
+                    <select id="scan-profile" class="form-select">
+                      <option value="full">Full Vulnerability Assessment</option>
+                      <option value="quick">Quick Discovery</option>
+                      <option value="custom">Custom Parameters</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Scan Intensity Level</label>
+                    <select id="scan-intensity" class="form-select">
+                      <option value="Standard">Standard (Full Benign Detection)</option>
+                      <option value="Light">Light (Headers + Crawl + CSRF)</option>
+                      <option value="Passive">Passive (Headers, Cookies & SSL only)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Crawl Depth Slider -->
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                    <label class="form-label" style="margin-bottom: 0;">Crawler Depth Limit</label>
+                    <span id="depth-val" style="font-family: var(--font-mono); color: var(--accent-cyan);">2</span>
+                  </div>
+                  <input type="range" id="scan-depth" min="1" max="4" value="2" style="width: 100%;" oninput="document.getElementById('depth-val').innerText = this.value">
+                </div>
+
+                <!-- Legal Declaration Checkbox -->
+                <div class="form-group" style="margin-top: 1.5rem; background: rgba(255,255,255,0.03); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+                  <label class="form-check">
+                    <input type="checkbox" id="scan-auth-checkbox" required>
+                    <span>
+                      <b>Legal Affirmation:</b> I certify that I am the authorized owner or possess documented written authorization from the system owner to conduct security testing on this target. I accept responsibility for this assessment.
+                    </span>
+                  </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem; margin-top: 0.5rem;" id="btn-start-scan">
+                  ⚡ Launch Authorized Assessment
+                </button>
+              </form>
+            </div>
+
+            <!-- Target Scope Summary Card (Dynamic) -->
+            <div>
+              <div class="card" id="target-scope-summary-card">
+                <div class="card-header">
+                  <div class="card-title">Target Authorization Summary</div>
+                </div>
+                <div id="target-scope-details" style="font-size: 0.88rem; color: var(--text-secondary);">
+                  <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+                    Select an authorized target from the dropdown to review scope limits, allowed testing windows, and rate quotas.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 4: LIVE SCAN PROGRESS ================= -->
+        <section id="page-live-scan" class="page-view">
+          <div class="card" style="margin-bottom: 1.25rem;">
+            <div class="card-header">
+              <div>
+                <div class="card-title" id="live-scan-title">Scan in Progress</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="live-scan-subtitle">Evaluating target endpoints...</div>
+              </div>
+              <div style="display: flex; gap: 0.75rem;">
+                <button class="btn btn-danger btn-sm" id="btn-stop-scan" onclick="ScanManager.stopActiveScan()">⏹ Stop Scan</button>
+                <button class="btn btn-secondary btn-sm" id="btn-view-results" onclick="ScanManager.viewActiveResults()" style="display: none;">📑 View Findings Report</button>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                <span id="live-active-module">Initializing modules...</span>
+                <span id="live-progress-pct" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-cyan);">0%</span>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="live-progress-bar"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-Time Metrics & Terminal Log -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+            <!-- Terminal Log Window -->
+            <div class="terminal-window">
+              <div class="terminal-header">
+                <div class="terminal-dots">
+                  <div class="terminal-dot red"></div>
+                  <div class="terminal-dot yellow"></div>
+                  <div class="terminal-dot green"></div>
+                </div>
+                <div>scanner_engine.log — bash</div>
+              </div>
+              <div class="terminal-body" id="live-terminal-logs">
+                <div class="terminal-line"><span class="time">[00:00:00]</span> <span class="level-INFO">[INFO]</span> Awaiting engine initialization...</div>
+              </div>
+            </div>
+
+            <!-- Real-Time Finding Stream -->
+            <div class="card" style="display: flex; flex-direction: column;">
+              <div class="card-header">
+                <div class="card-title">Live Discovered Findings (<span id="live-findings-count">0</span>)</div>
+              </div>
+              <div style="flex: 1; overflow-y: auto; max-height: 280px;" id="live-findings-list">
+                <div style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+                  No findings detected yet. Real-time issues will appear here as modules execute.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 5: SCAN RESULTS ================= -->
+        <section id="page-scan-results" class="page-view">
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+              <div>
+                <div class="card-title" id="results-target-title">Security Assessment Results</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;" id="results-meta-subtitle"></div>
+              </div>
+              <div style="display: flex; gap: 0.75rem;">
+                <a id="btn-download-pdf" href="#" class="btn btn-primary btn-sm">📄 Download PDF Report</a>
+                <a id="btn-download-json" href="#" class="btn btn-secondary btn-sm">💾 Export JSON</a>
+              </div>
+            </div>
+
+            <!-- Risk Score Metric Card -->
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.4); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+              <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Evaluated Risk Score</div>
+                <div style="font-size: 2.4rem; font-weight: 800; font-family: var(--font-mono); color: var(--severity-high);" id="results-risk-score">0.0</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);" id="results-risk-label">Calculated from CVSS 3.1 severity metrics</div>
+              </div>
+
+              <!-- Quick Severity Counts Chips -->
+              <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;" id="results-sev-chips">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Findings List & Filters -->
+          <div class="card">
+            <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+              <div class="card-title">Identified Vulnerabilities & Issues</div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="findings-search" class="form-control" placeholder="Search findings..." style="width: 220px;" oninput="ResultsManager.filterFindings()">
+                <select id="findings-sev-filter" class="form-select" style="width: 150px;" onchange="ResultsManager.filterFindings()">
+                  <option value="">All Severities</option>
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                  <option value="Info">Info</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="findings-container">
+              <!-- Dynamically populated finding cards -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 6: SCAN HISTORY ================= -->
+        <section id="page-history" class="page-view">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Assessment History & Comparisons</div>
+              <button class="btn btn-secondary btn-sm" id="btn-compare-scans" onclick="HistoryManager.compareSelectedScans()" disabled>
+                ⚖️ Compare Selected (0)
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px;">Select</th>
+                    <th>Scan ID</th>
+                    <th>Target</th>
+                    <th>Type / Intensity</th>
+                    <th>Status</th>
+                    <th>Findings</th>
+                    <th>Risk Score</th>
+                    <th>Duration</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="history-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 7: COMPLIANCE & AUDIT TRAIL ================= -->
+        <section id="page-compliance" class="page-view">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Compliance Audit Trail</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                  Tamper-evident log of all target additions, verifications, scan launches, and report exports.
+                </div>
+              </div>
+              <a href="/api/audit-logs.csv" class="btn btn-secondary btn-sm">📥 Download Audit Log (CSV)</a>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+              <input type="text" id="audit-filter-action" class="form-control" placeholder="Filter by action (e.g. TARGET, SCAN)..." oninput="ComplianceManager.loadAuditLogs()">
+              <input type="text" id="audit-filter-domain" class="form-control" placeholder="Filter by domain..." oninput="ComplianceManager.loadAuditLogs()">
+            </div>
+
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Action</th>
+                    <th>Target Domain</th>
+                    <th>Details</th>
+                    <th>IP Address</th>
+                    <th>Operator</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-logs-table-body">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 8: SETTINGS ================= -->
+        <section id="page-settings" class="page-view">
+          <div class="card" style="max-width: 700px; margin-bottom: 1.5rem;">
+            <div class="card-header">
+              <div class="card-title">System & Security Settings</div>
+            </div>
+
+            <!-- Emergency Kill Switch -->
+            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); padding: 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 700; color: var(--severity-critical); font-size: 1rem;">Global Emergency Kill Switch</div>
+                  <div style="font-size: 0.84rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                    Instantly halts all running scanner threads across the entire platform and blocks new scan invocations immediately.
+                  </div>
+                </div>
+                <button id="kill-switch-toggle" class="btn btn-danger" onclick="SettingsManager.toggleKillSwitch()">
+                  Kill Switch: OFF
+                </button>
+              </div>
+            </div>
+
+            <form onsubmit="SettingsManager.saveSettings(event)">
+              <div class="form-group">
+                <label class="form-label" for="setting-contact-email">Scanner Contact Email (User-Agent Disclosure)</label>
+                <input type="email" id="setting-contact-email" class="form-control" placeholder="security@yourorg.com" required>
+                <small style="color: var(--text-muted); font-size: 0.78rem;">Sent in the User-Agent header of all scanner HTTP requests so target administrators can reach you.</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="setting-openai-key">OpenAI API Key (Optional for AI Explanations)</label>
+                <input type="password" id="setting-openai-key" class="form-control" placeholder="sk-...">
+                <small style="color: var(--text-muted); font-size: 0.78rem;">If not provided, SecureScan AI seamlessly falls back to its built-in static cybersecurity knowledge base.</small>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Save Settings</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 9: ABOUT & ETHICS ================= -->
+        <section id="page-about" class="page-view">
+          <div class="card" style="max-width: 800px; margin-bottom: 1.5rem;">
+            <div class="card-header">
+              <div class="card-title">🛡️ About SecureScan AI & Legal Compliance</div>
+            </div>
+            <div style="font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary);">
+              <p style="margin-bottom: 1rem;">
+                <b>SecureScan AI</b> is a defensive web application security testing and compliance auditing platform designed for authorized security practitioners, students, and system owners.
+              </p>
+              <h3 style="color: var(--accent-cyan); margin: 1.25rem 0 0.5rem 0; font-size: 1.05rem;">Core Safety & Ethics Controls</h3>
+              <ul style="padding-left: 1.25rem; margin-bottom: 1rem;">
+                <li><b>Strict Ownership Enforcement:</b> No scans can be executed without verified ownership (DNS TXT / HTML meta tag / file upload) or signed written authorization.</li>
+                <li><b>Active SSRF Protection:</b> Resolves hostnames in real-time and blocks private networks (RFC 1918), loopback, link-local, and cloud metadata endpoints (169.254.169.254) unless explicitly authorized as an educational lab target.</li>
+                <li><b>Non-Destructive Detection Only:</b> Employs harmless benign probe markers. Never executes Denial-of-Service (DoS), database truncation, data extraction, or persistent modifications.</li>
+                <li><b>Rate-Limited & Transparent:</b> Restricts request velocity (requests per second) and sends an explicit <code>SecureScanAI/1.0</code> User-Agent disclosing contact information.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal 1: Add Target Wizard -->
+  <div class="modal-overlay" id="modal-add-target">
+    <div class="modal-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">Add Authorized Target</h2>
+        <button class="btn btn-secondary btn-sm" onclick="TargetsManager.closeAddTargetModal()">✕</button>
+      </div>
+
+      <!-- Stepper Progress Header -->
+      <div class="stepper-header">
+        <div class="step-item active" id="step-dot-1">
+          <div class="step-circle">1</div>
+          <div class="step-title">Target Type</div>
+        </div>
+        <div class="step-item" id="step-dot-2">
+          <div class="step-circle">2</div>
+          <div class="step-title">Verification</div>
+        </div>
+        <div class="step-item" id="step-dot-3">
+          <div class="step-circle">3</div>
+          <div class="step-title">Scope & Limits</div>
+        </div>
+      </div>
+
+      <!-- Step 1 Content: Choose Type & Domain -->
+      <div class="step-content active" id="wizard-step-1">
+        <div class="form-group">
+          <label class="form-label">Target Domain / Hostname *</label>
+          <input type="text" id="target-domain-input" class="form-control" placeholder="e.g. app.mycompany.com or testphp.vulnweb.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Classification *</label>
+          <select id="target-type-select" class="form-select" onchange="TargetsManager.handleTypeChange(this.value)">
+            <option value="own">My Own Website (Requires Proof of Ownership)</option>
+            <option value="third_party">Third-Party Website (Requires Written Authorization)</option>
+            <option value="lab">Pre-Approved Educational Lab (localhost, testphp.vulnweb.com, etc.)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+          <button class="btn btn-primary" onclick="TargetsManager.goToStep(2)">Next: Verification →</button>
+        </div>
+      </div>
+
+      <!-- Step 2 Content: Verification / Written Authorization -->
+      <div class="step-content" id="wizard-step-2">
+        <!-- Sub-panel for OWN WEBSITE -->
+        <div id="subpanel-own" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Ownership Verification Method</label>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <label class="form-check"><input type="radio" name="own_method" value="dns_txt" checked onchange="TargetsManager.toggleOwnMethod(this.value)"> DNS TXT Record</label>
+              <label class="form-check"><input type="radio" name="own_method" value="html_meta" onchange="TargetsManager.toggleOwnMethod(this.value)"> HTML Meta Tag</label>
+              <label class="form-check"><input type="radio" name="own_method" value="file_upload" onchange="TargetsManager.toggleOwnMethod(this.value)"> File Upload</label>
+            </div>
+
+            <!-- Dynamic Instructions Box -->
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); padding: 1rem; border-radius: var(--radius-sm);" id="own-instructions-box">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-panel for THIRD-PARTY WEBSITE -->
+        <div id="subpanel-third-party" style="display: none;">
+          <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Provide the authorizer's official contact information and testing parameters.
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Authorizer Full Name *</label>
+              <input type="text" id="auth-name" class="form-control" placeholder="Dr. Jane Doe">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Designation / Role *</label>
+              <input type="text" id="auth-designation" class="form-control" placeholder="CISO / Lead Architect">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Organization Name *</label>
+              <input type="text" id="auth-org" class="form-control" placeholder="Acme Technologies Inc.">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Official Email Address *</label>
+              <input type="email" id="auth-email" class="form-control" placeholder="j.doe@acme.com">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Testing Window Start *</label>
+              <input type="datetime-local" id="auth-win-start" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Testing Window End *</label>
+              <input type="datetime-local" id="auth-win-end" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Upload Authorization Proof (PDF/PNG/JPG, max 5MB)</label>
+            <input type="file" id="auth-proof-file" class="form-control" accept=".pdf,.png,.jpg,.jpeg">
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); margin-top: 0.5rem;">
+            <label class="form-check"><input type="checkbox" id="auth-decl-1"> I have documented written permission from the system owner.</label>
+            <label class="form-check"><input type="checkbox" id="auth-decl-2"> I accept legal responsibility for the security assessment.</label>
+            <label class="form-check"><input type="checkbox" id="auth-decl-3"> I will not exploit or disclose findings to any party other than the owner.</label>
+          </div>
+        </div>
+
+        <!-- Sub-panel for LAB -->
+        <div id="subpanel-lab" style="display: none;">
+          <div style="padding: 1.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); color: #34d399;">
+            <b>Pre-Approved Educational Sandbox</b><br>
+            Educational and local sandbox environments (localhost, 127.0.0.1, testphp.vulnweb.com) are pre-cleared for training and vulnerability assessment.
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+          <button class="btn btn-secondary" onclick="TargetsManager.goToStep(1)">← Back</button>
+          <button class="btn btn-primary" onclick="TargetsManager.goToStep(3)">Next: Define Scope →</button>
+        </div>
+      </div>
+
+      <!-- Step 3 Content: Scope & Limits -->
+      <div class="step-content" id="wizard-step-3">
+        <div class="form-group">
+          <label class="form-label">In-Scope Paths (Comma-separated)</label>
+          <input type="text" id="target-in-scope" class="form-control" value="/*" placeholder="/*, /api/*, /portal/*">
+          <small style="color: var(--text-muted); font-size: 0.78rem;">Only URLs starting with these paths will be tested or crawled.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Out-of-Scope Paths (Comma-separated)</label>
+          <input type="text" id="target-out-scope" class="form-control" value="/admin,/payment,/logout" placeholder="/admin, /billing, /logout">
+          <small style="color: var(--text-muted); font-size: 0.78rem;">These paths will be strictly skipped by the scanner and crawler.</small>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Allowed Intensity</label>
+            <select id="target-intensity" class="form-select">
+              <option value="Standard">Standard</option>
+              <option value="Light">Light</option>
+              <option value="Passive">Passive Only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Requests / Sec</label>
+            <input type="number" id="target-max-req" class="form-control" value="5" min="1" max="20">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+          <button class="btn btn-secondary" onclick="TargetsManager.goToStep(2)">← Back</button>
+          <button class="btn btn-primary" id="btn-save-target" onclick="TargetsManager.submitNewTarget()">Finish & Register Target ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: AI Explainer Modal -->
+  <div class="modal-overlay" id="modal-ai-explain">
+    <div class="modal-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--accent-cyan);" id="modal-explain-title">AI Vulnerability Advisory</h2>
+        <button class="btn btn-secondary btn-sm" onclick="ResultsManager.closeExplainModal()">✕</button>
+      </div>
+      <div id="modal-explain-body" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); max-height: 60vh; overflow-y: auto;">
+        <!-- AI output injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Compare Scans Modal -->
+  <div class="modal-overlay" id="modal-compare">
+    <div class="modal-dialog" style="max-width: 800px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">Scan Comparative Analysis</h2>
+        <button class="btn btn-secondary btn-sm" onclick="HistoryManager.closeCompareModal()">✕</button>
+      </div>
+      <div id="compare-modal-content">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/targets.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/scan.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/results.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/compliance.js') }}"></script>
+</body>
+</html>

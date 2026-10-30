@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+database/securescan.db
+uploads/authorizations/*
+!uploads/authorizations/.gitkeep
+.env
+.DS_Store
