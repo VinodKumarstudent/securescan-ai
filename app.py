@@ -61,6 +61,20 @@ def download_presentation_pptx():
         download_name="SecureScan_AI_Presentation.pptx"
     )
 
+@app.route("/research-papers/pdf")
+def download_research_papers_pdf():
+    """Download the compiled academic literature review PDF document."""
+    pdf_path = os.path.join(os.path.dirname(__file__), "securescan_ai_research_papers.pdf")
+    if not os.path.exists(pdf_path):
+        from generate_research_pdf import build_research_pdf
+        build_research_pdf(pdf_path)
+    return send_file(
+        pdf_path,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name="SecureScan_AI_Academic_Research_Papers.pdf"
+    )
+
 @app.route("/lab/test-page", methods=["GET", "POST"])
 def educational_lab_page():
     """
