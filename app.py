@@ -42,6 +42,25 @@ with app.app_context():
 def index():
     return render_template("index.html")
 
+@app.route("/presentation")
+def presentation_page():
+    """Interactive HTML5 slide presentation deck for project defense and seminar."""
+    return render_template("presentation.html")
+
+@app.route("/presentation/download")
+def download_presentation_pptx():
+    """Download the 14-slide master PowerPoint file (.pptx)."""
+    pptx_path = os.path.join(os.path.dirname(__file__), "securescan_ai_presentation.pptx")
+    if not os.path.exists(pptx_path):
+        from generate_ppt import create_presentation
+        create_presentation()
+    return send_file(
+        pptx_path,
+        mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        as_attachment=True,
+        download_name="SecureScan_AI_Presentation.pptx"
+    )
+
 @app.route("/lab/test-page", methods=["GET", "POST"])
 def educational_lab_page():
     """

@@ -4,7 +4,7 @@
   backdrop-filter: blur(14px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: var(--card-padding);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
   transition: var(--transition);
 }
@@ -65,7 +65,7 @@
 }
 
 .stat-value {
-  font-size: 1.95rem;
+  font-size: var(--stat-number-size, 1.95rem);
   font-weight: 700;
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -196,10 +196,17 @@
 .table-responsive {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-sm);
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 5px;
 }
 
 .table {
   width: 100%;
+  min-width: 580px;
   border-collapse: collapse;
   text-align: left;
 }

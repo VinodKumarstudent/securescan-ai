@@ -57,6 +57,12 @@
           <span class="icon">ℹ️</span>
           <span class="label">About & Ethics</span>
         </li>
+        <li class="nav-item">
+          <a href="/presentation" target="_blank" style="text-decoration: none; color: var(--accent-cyan); display: flex; align-items: center; gap: 0.85rem; width: 100%;">
+            <span class="icon">📽️</span>
+            <span class="label">Project PPT / Slides</span>
+          </a>
+        </li>
       </ul>
 
       <div class="sidebar-footer">
@@ -64,6 +70,9 @@
         <span style="font-size: 0.75rem; color: var(--text-muted);">v2.4 Enterprise</span>
       </div>
     </aside>
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeMobileSidebar()"></div>
 
     <!-- Main View Area -->
     <main class="main-wrapper">
@@ -74,6 +83,11 @@
           <h1 class="page-title" id="current-page-title">Dashboard Overview</h1>
         </div>
         <div class="topbar-actions">
+          <button class="screen-adjust-btn" id="btn-screen-adjust" onclick="ScreenManager.openModal()" title="Adjust screen scaling, density, or device presets">
+            <span>📐</span>
+            <span class="label">Screen</span>
+            <span class="device-badge-live" id="topbar-device-pill">Auto</span>
+          </button>
           <div class="status-indicator">
             <div class="pulse-dot"></div>
             <span>SSRF Engine Armed</span>
@@ -108,7 +122,7 @@
           </div>
 
           <!-- Charts Row -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+          <div class="charts-grid">
             <div class="card">
               <div class="card-header">
                 <div class="card-title">Finding Severity Breakdown</div>
