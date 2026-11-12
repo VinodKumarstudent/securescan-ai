@@ -75,6 +75,20 @@ def download_research_papers_pdf():
         download_name="SecureScan_AI_Academic_Research_Papers.pdf"
     )
 
+@app.route("/docs/pdf/<filename>")
+def download_package_pdf(filename):
+    """Download any PDF from the PDF_Documentation_Package."""
+    package_dir = os.path.join(os.path.dirname(__file__), "PDF_Documentation_Package")
+    file_path = os.path.join(package_dir, filename)
+    if not os.path.exists(file_path):
+        return jsonify({"error": f"Document {filename} not found"}), 404
+    return send_file(
+        file_path,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=filename
+    )
+
 @app.route("/lab/test-page", methods=["GET", "POST"])
 def educational_lab_page():
     """
