@@ -46,7 +46,7 @@ class Config:
     ]
     
     # Scanner rate limits and timeouts
-    DEFAULT_TIMEOUT = 7  # seconds
+    DEFAULT_TIMEOUT = 12  # seconds (allows cloud cold-starts e.g. Render / Heroku)
     DEFAULT_MAX_REQUESTS_PER_SEC = 5
     TOKEN_EXPIRY_DAYS = 7
     
