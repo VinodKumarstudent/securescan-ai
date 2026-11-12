@@ -254,8 +254,9 @@
                 <!-- Target URL / Starting Path -->
                 <div class="form-group">
                   <label class="form-label" for="scan-target-url">Target Starting URL / Subpath *</label>
-                  <input type="text" id="scan-target-url" class="form-control" placeholder="https://example.com/app" required>
-                  <small style="color: var(--text-muted); font-size: 0.78rem;">Must match the authorized domain and stay within authorized in-scope paths.</small>
+                  <input type="text" id="scan-target-url" class="form-control" placeholder="https://example.com/app" oninput="ScanManager.handleUrlInput()" required>
+                  <div id="scan-scope-mismatch-alert" style="display:none; margin-top: 0.5rem;"></div>
+                  <small style="color: var(--text-muted); font-size: 0.78rem;">Must match the authorized domain above and stay within authorized in-scope paths.</small>
                 </div>
 
                 <!-- Scan Type & Intensity Options -->

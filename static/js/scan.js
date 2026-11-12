@@ -35,9 +35,83 @@ const ScanManager = {
     }
   },
 
-  handleTargetSelected(targetId) {
+  extractDomainFromUrl(url) {
+    if (!url) return '';
+    try {
+      let testUrl = url.trim();
+      if (!testUrl.startsWith('http://') && !testUrl.startsWith('https://')) {
+        testUrl = 'http://' + testUrl;
+      }
+      const parsed = new URL(testUrl);
+      return parsed.hostname.toLowerCase();
+    } catch (e) {
+      return '';
+    }
+  },
+
+  handleUrlInput() {
+    const urlInput = document.getElementById('scan-target-url');
+    const select = document.getElementById('scan-target-select');
+    const alertBox = document.getElementById('scan-scope-mismatch-alert');
+    if (!urlInput || !select) return;
+
+    const typedDomain = this.extractDomainFromUrl(urlInput.value);
+    if (!typedDomain) {
+      if (alertBox) alertBox.style.display = 'none';
+      return;
+    }
+
+    const currentTarget = this.verifiedTargets.find(x => x.id == select.value);
+
+    // Check if typed domain directly matches another authorized target
+    const matchingTarget = this.verifiedTargets.find(t => {
+      const cleanDom = t.domain.split(':')[0].toLowerCase();
+      return cleanDom === typedDomain || typedDomain.endsWith('.' + cleanDom);
+    });
+
+    // Auto-switch target dropdown if user typed/pasted a different authorized target URL
+    if (matchingTarget && (!currentTarget || matchingTarget.id != currentTarget.id)) {
+      select.value = matchingTarget.id;
+      this.handleTargetSelected(matchingTarget.id, false); // false = keep typed URL
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        alertBox.style.backgroundColor = 'rgba(56, 189, 248, 0.12)';
+        alertBox.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+        alertBox.style.color = '#38bdf8';
+        alertBox.style.padding = '0.5rem 0.75rem';
+        alertBox.style.borderRadius = '6px';
+        alertBox.style.fontSize = '0.82rem';
+        alertBox.innerHTML = `🎯 <b>Auto-selected authorized target:</b> ${matchingTarget.domain}`;
+        setTimeout(() => { if (alertBox) alertBox.style.display = 'none'; }, 4000);
+      }
+      return;
+    }
+
+    // If current target doesn't match typed domain
+    if (currentTarget) {
+      const currentDomain = currentTarget.domain.split(':')[0].toLowerCase();
+      if (currentDomain !== typedDomain && !typedDomain.endsWith('.' + currentDomain)) {
+        if (alertBox) {
+          alertBox.style.display = 'block';
+          alertBox.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
+          alertBox.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+          alertBox.style.color = '#fca5a5';
+          alertBox.style.padding = '0.5rem 0.75rem';
+          alertBox.style.borderRadius = '6px';
+          alertBox.style.fontSize = '0.82rem';
+          alertBox.innerHTML = `⚠️ <b>Target Mismatch:</b> You selected <b>${currentTarget.domain}</b> above, but entered a URL for <b>${typedDomain}</b>.<br>To fix: select <b>${typedDomain}</b> from the dropdown above, or add it in <a href="#targets" onclick="App.navigate('targets')" style="color: #67e8f9; text-decoration: underline;">Authorized Targets</a>.`;
+        }
+        return;
+      }
+    }
+
+    if (alertBox) alertBox.style.display = 'none';
+  },
+
+  handleTargetSelected(targetId, updateUrl = true) {
     const summaryBox = document.getElementById('target-scope-details');
     const urlInput = document.getElementById('scan-target-url');
+    const alertBox = document.getElementById('scan-scope-mismatch-alert');
     if (!targetId) {
       summaryBox.innerHTML = '<div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">Select an authorized target from the dropdown to review scope limits, allowed testing windows, and rate quotas.</div>';
       return;
@@ -46,10 +120,13 @@ const ScanManager = {
     const t = this.verifiedTargets.find(x => x.id == targetId);
     if (!t) return;
 
-    // Prefill URL
-    if (urlInput && !urlInput.value) {
-      const proto = t.domain.includes('localhost') || t.domain.includes('127.0.0.1') ? 'http://' : 'https://';
-      urlInput.value = `${proto}${t.domain}`;
+    // Automatically synchronize URL field with selected target
+    if (urlInput && updateUrl) {
+      const isLocal = t.domain.includes('localhost') || t.domain.includes('127.0.0.1');
+      const proto = isLocal ? 'http://' : (t.domain.includes('vulnweb') ? 'http://' : 'https://');
+      const defaultPath = isLocal ? '/lab/test-page' : '/';
+      urlInput.value = `${proto}${t.domain}${defaultPath}`;
+      if (alertBox) alertBox.style.display = 'none';
     }
 
     // Render scope summary
@@ -108,6 +185,17 @@ const ScanManager = {
     if (!authChecked) {
       App.showToast('You must check the authorization affirmation.', 'error');
       return;
+    }
+
+    // Client-side domain match check
+    const targetObj = this.verifiedTargets.find(x => x.id == targetId);
+    const typedDomain = this.extractDomainFromUrl(targetUrl);
+    if (targetObj && typedDomain) {
+      const authDomain = targetObj.domain.split(':')[0].toLowerCase();
+      if (typedDomain !== authDomain && !typedDomain.endsWith('.' + authDomain)) {
+        App.showToast(`Domain Mismatch: Target selected is '${targetObj.domain}', but URL is for '${typedDomain}'. Please select '${typedDomain}' in the dropdown.`, 'error');
+        return;
+      }
     }
 
     try {

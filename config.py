@@ -37,8 +37,10 @@ class Config:
         "localhost:5001",
         "127.0.0.1:5000",
         "127.0.0.1:5001",
+        "weather-app-a7f3.onrender.com",
         "testphp.vulnweb.com",
         "testasp.vulnweb.com",
+        "bank-client.com",
         "juice-shop.herokuapp.com",
         "dvwa.local"
     ]

@@ -155,6 +155,26 @@ def init_db():
         )
         """)
 
+        # Ensure default lab and demo targets exist
+        from datetime import timedelta
+        now_dt = utcnow()
+        now_s = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+        exp_s = (now_dt + timedelta(days=365)).strftime('%Y-%m-%d %H:%M:%S')
+        default_targets = [
+            ("localhost:5001", "lab", "/*", "", 10),
+            ("localhost:5000", "lab", "/*", "", 10),
+            ("testphp.vulnweb.com", "lab", "/*", "/admin,/logout", 5),
+            ("weather-app-a7f3.onrender.com", "lab", "/*", "", 5),
+            ("bank-client.com", "lab", "/*", "/admin,/payment", 5),
+        ]
+        for dom, ttype, in_s, out_s, max_rps in default_targets:
+            cursor.execute("SELECT id FROM targets WHERE domain = ?", (dom,))
+            if not cursor.fetchone():
+                cursor.execute("""
+                    INSERT INTO targets (domain, target_type, status, verification_method, in_scope_paths, out_of_scope_paths, allowed_intensity, max_requests_per_sec, verified_at, expires_at)
+                    VALUES (?, ?, 'verified', 'preapproved', ?, ?, 'Standard', ?, ?, ?)
+                """, (dom, ttype, in_s, out_s, max_rps, now_s, exp_s))
+
         conn.commit()
         conn.close()
 

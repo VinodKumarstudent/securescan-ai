@@ -36,6 +36,17 @@ def seed_demo_data():
     ))
     target1_id = cursor.lastrowid
 
+    # Pre-approved Lab Target: weather-app-a7f3.onrender.com
+    cursor.execute("""
+        INSERT INTO targets (
+            domain, target_type, status, verification_method, in_scope_paths, 
+            out_of_scope_paths, allowed_intensity, max_requests_per_sec, verified_at, expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        "weather-app-a7f3.onrender.com", "lab", "verified", "preapproved", "/*",
+        "", "Standard", 5, now_str, one_year_later
+    ))
+
     # Pre-approved Lab Target: localhost
     cursor.execute("""
         INSERT INTO targets (
