@@ -472,6 +472,26 @@ body {
   font-size: 0.88rem;
 }
 
+/* Explicit Preset Simulation Classes */
+html.preset-force-mobile .stats-grid {
+  grid-template-columns: 1fr !important;
+}
+html.preset-force-mobile .charts-grid,
+html.preset-force-mobile .telemetry-grid,
+html.preset-force-mobile .scan-layout-grid {
+  grid-template-columns: 1fr !important;
+}
+html.preset-force-tablet .stats-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+html.preset-force-tablet .charts-grid,
+html.preset-force-tablet .scan-layout-grid {
+  grid-template-columns: 1fr !important;
+}
+html.preset-force-desktop .stats-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
 /* ========================================================
    MEDIA QUERIES (Multi-Device Responsive Breakpoints)
    ======================================================== */
